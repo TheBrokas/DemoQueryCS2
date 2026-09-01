@@ -1,0 +1,49 @@
+DemoQueryCS2 License
+Copyright (c) 2026 Rokas Dargis / CS2Analysis. All rights reserved.
+
+1. FREE USE OF THE APP
+   The compiled DemoQueryCS2 application ("the App") is free of charge. You may
+   download, install, and use the App for personal use and for use within your
+   team or organization.
+
+2. WHAT YOU MAY NOT DO
+   You may not sell, rent, sublicense, or charge for the App or access to it;
+   redistribute the App or modified versions of it (link to the official
+   download instead); or remove copyright, attribution, or license notices.
+
+3. SOURCE CODE (SOURCE-AVAILABLE, NOT OPEN SOURCE)
+   Source code may be published for transparency and reference. Except as
+   permitted by Section 3a, no license to the source code is granted: you may
+   read it, but you may not use, copy, modify, or redistribute it, in whole or
+   in part, outside this repository.
+
+3a. BUILDING FROM SOURCE FOR YOUR OWN USE
+   You may clone the source code and run or build it solely to produce the App
+   for your own personal use or use within your team or organization, subject
+   to the same terms that apply to the official binaries (Sections 1, 2 and
+   5-7). Redistribution of the source code, of modified versions of it, or of
+   builds you produce from it remains prohibited — link others to the official
+   repository or download instead.
+
+4. THIRD-PARTY COMPONENTS
+   The App includes third-party open-source components used under their own
+   licenses; see THIRD_PARTY_LICENSES.txt (bundled with every build).
+
+5. GAME ASSETS
+   Radar imagery and weapon/HUD iconography derive from Valve's
+   Counter-Strike 2 game assets. Valve Corporation retains all rights to those
+   assets. This project is not affiliated with, sponsored by, or endorsed by
+   Valve Corporation. Counter-Strike and Counter-Strike 2 are trademarks of
+   Valve Corporation.
+
+6. NO WARRANTY
+   THE APP IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN
+   ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN
+   CONNECTION WITH THE APP OR THE USE OF THE APP.
+
+7. TERMINATION
+   This license terminates automatically if you breach its terms. On
+   termination you must uninstall and delete all copies of the App.

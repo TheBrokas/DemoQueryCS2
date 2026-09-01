@@ -1,0 +1,143 @@
+DemoQueryCS2 — Third-Party Notices
+===================================
+
+DemoQueryCS2 is proprietary software (c) 2026 Rokas Dargis / CS2Analysis.
+It bundles or builds upon the following third-party components, used under
+their respective licenses. The license texts below apply to those components
+only, not to DemoQueryCS2 itself.
+
+-------------------------------------------------------------------------------
+Components distributed with DemoQueryCS2 (desktop app / server builds)
+-------------------------------------------------------------------------------
+
+demoparser2 — CS2 demo parser
+  Copyright (c) 2023 LaihoE
+  License: MIT (text below)
+  https://github.com/LaihoE/demoparser
+
+FastAPI
+  Copyright (c) 2018 Sebastian Ramirez
+  License: MIT (text below)
+  https://github.com/fastapi/fastapi
+
+pydantic
+  Copyright (c) 2017-present Samuel Colvin and other contributors
+  License: MIT (text below)
+  https://github.com/pydantic/pydantic
+
+Uvicorn
+  Copyright (c) 2017-present, Encode OSS Ltd.
+  License: BSD 3-Clause (text below)
+  https://github.com/encode/uvicorn
+
+Starlette
+  Copyright (c) 2018, Encode OSS Ltd.
+  License: BSD 3-Clause (text below)
+  https://github.com/encode/starlette
+
+NumPy
+  Copyright (c) 2005-2026, NumPy Developers
+  License: BSD 3-Clause (text below)
+  https://numpy.org
+
+pandas
+  Copyright (c) 2008-2011 AQR Capital Management, LLC;
+  2011-2026 pandas Development Team and open source contributors
+  License: BSD 3-Clause (text below)
+  https://pandas.pydata.org
+
+CPython (Python runtime)
+  Copyright (c) 2001-2026 Python Software Foundation
+  License: PSF License Agreement
+  https://docs.python.org/3/license.html
+
+Tauri (desktop application shell)
+  Copyright (c) 2019-2026 Tauri Programme within The Commons Conservancy
+  License: MIT or Apache-2.0
+  https://github.com/tauri-apps/tauri
+
+PyInstaller (packaging tool; its bootloader is embedded in the server binary)
+  License: GPL 2.0 with the PyInstaller Bootloader Exception, which expressly
+  permits distributing bundled applications under any license.
+  https://pyinstaller.org
+
+-------------------------------------------------------------------------------
+Build-time-only components (not distributed)
+-------------------------------------------------------------------------------
+
+awpy — Copyright (c) Peter Xenopoulos, License: MIT
+  Used at build time to obtain map calibration and navigation-mesh data.
+  https://github.com/pnxenopoulos/awpy
+
+-------------------------------------------------------------------------------
+Method attribution
+-------------------------------------------------------------------------------
+
+The retrieval approach is an independent reimplementation inspired by:
+  Xenopoulos, Rulff, Silva - "ggViz: Accelerating Large-Scale Esports Game
+  Analysis" (arXiv:2107.06495). No source code from that project is used.
+
+-------------------------------------------------------------------------------
+Game assets
+-------------------------------------------------------------------------------
+
+Radar imagery, weapon and HUD iconography derive from Counter-Strike 2 game
+assets. Counter-Strike and Counter-Strike 2 are trademarks of, and such assets
+are copyright, Valve Corporation. DemoQueryCS2 is not affiliated with, endorsed
+by, or sponsored by Valve Corporation.
+
+The X logo is a trademark of X Corp., used solely to link to the author's
+X account.
+
+===============================================================================
+MIT License (applies to components marked MIT above, under their listed
+copyright holders)
+===============================================================================
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+===============================================================================
+BSD 3-Clause License (applies to components marked BSD 3-Clause above, under
+their listed copyright holders)
+===============================================================================
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

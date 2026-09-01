@@ -1,0 +1,8 @@
+# Hosted web demo dependencies (Railway/railpack).
+# The app itself is not pip-installed here: railpack installs requirements before
+# copying the source tree, so `-e .` fails. The Procfile puts src/ on PYTHONPATH.
+fastapi>=0.111
+uvicorn>=0.30
+demoparser2>=0.35
+numpy>=1.26
+pandas>=2.0

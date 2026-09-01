@@ -1,0 +1,36 @@
+# --- user data / runtime (large, regenerable, or personal) ---
+demos/
+settings.json
+cs2sf.sqlite3
+cs2sf.sqlite3-wal
+cs2sf.sqlite3-shm
+deploy/demo.sqlite3
+deploy/demo.sqlite3.new
+deploy/demo.sqlite3.download
+deploy/demo.sqlite3.prev
+cache/
+maps_override/
+
+# --- build outputs ---
+dist-server/
+packaging/build/
+src-tauri/target/
+src-tauri/gen/
+*.egg-info/
+build/
+
+# --- environments / caches ---
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# --- local-only assets ---
+ggViz.pdf
+# third-party artwork (team logos, map icons) stays out of the public repo;
+# the web demo serves it from cs2analysis.com/icons/dq/ instead
+src/demoquerycs2/web/static/icons/teams/
+src/demoquerycs2/web/static/icons/maps/
+# local metadata overlay (not distributed; the web DB snapshot carries the
+# stamped columns instead)
+src/demoquerycs2/assets/matchmeta.json

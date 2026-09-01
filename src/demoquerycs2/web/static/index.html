@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DemoQueryCS2</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="processing-banner" hidden role="status" aria-live="polite">
+  <span class="spinner" aria-hidden="true"></span>
+  <span class="processing-text">
+    <strong>Processing demos — please keep this window open.</strong>
+    <span id="processing-detail" class="processing-detail"></span>
+  </span>
+</div>
+<div id="app">
+  <aside id="sidebar">
+    <h1><a id="site-logo-link" title="CS2Analysis"><img class="site-logo" src="icons/cs2analysis.svg" alt="CS2Analysis"></a>DemoQuery<span>CS2</span>
+      <button id="help-btn" title="How it works">?</button>
+      <button id="settings-btn" class="app-only" title="Settings">&#9881;</button></h1>
+
+    <!-- web demo only: download CTA + preloaded-library note (hidden in the app) -->
+    <div id="get-app-btn" class="cta">
+      <a id="get-app-link" href="https://cs2analysis.com/demoquery/download" target="_top"
+         title="Free Windows app — index and search your own demos">
+        &#11015; Download DemoQueryCS2<br><span>free &middot; Windows &middot; use your own demos</span></a>
+      <a class="cta-follow" href="https://x.com/ItsBrokas" target="_blank" rel="noopener">
+        <img src="icons/x_logo.webp" alt="X"> For updates and questions, visit @ItsBrokas</a>
+    </div>
+    <div id="demo-note" class="muted small"></div>
+
+    <a id="update-banner" class="app-only" href="https://cs2analysis.com/demoquery/download"
+       target="_blank" rel="noopener" hidden
+       title="Download the new installer — your demo library and settings are kept">
+      &#11014; Update available: v<span id="update-ver"></span> &mdash; download</a>
+
+    <label class="lbl lbl-hdr">Map</label>
+    <select id="map-select"></select>
+    <div id="map-stats" class="muted"></div>
+
+    <label class="lbl lbl-hdr">Draw</label>
+    <div class="btnrow">
+      <button id="side-ct" class="side active-ct">CT</button>
+      <button id="side-t" class="side">T</button>
+      <button id="side-smoke" class="side" title="Place a smoke marker — matches moments with a smoke burning there (max 10)">Smoke</button>
+      <button id="side-molly" class="side" title="Place a molly marker — matches moments with fire burning there (max 10)">Molly</button>
+      <button id="clear-btn" title="Clear all markers">Clear</button>
+    </div>
+
+    <label class="lbl">Similarity Tolerance: <span id="dist-val">300u</span></label>
+    <input type="range" id="dist-slider" min="0" max="800" step="25" value="300">
+    <div class="muted small">0 = exact node match &middot; ~145u = one smoke radius</div>
+
+    <details id="filters" open>
+      <summary class="lbl-hdr">Filters
+        <button id="f-reset" class="linkbtn" title="Reset every filter below to its default">reset</button></summary>
+      <label class="lbl" title="Which phase of the round to search. The round clock filters the pre-plant phase; the plant site filters the post-plant phase.">
+        Round Phase</label>
+      <div class="btnrow chips" id="f-phase"
+           title="All = both phases. Pre-plant = before the bomb is down (round clock applies). Post-plant = bomb planted (plant site applies).">
+        <button data-phase="all" class="on">All</button>
+        <button data-phase="pre">Pre-plant</button>
+        <button data-phase="post">Post-plant</button>
+      </div>
+      <label class="lbl" id="f-clock-lbl"
+             title="Time left on the 1:55 round clock. Planted moments have no round clock — they are filtered by phase and site instead.">
+        Round Clock Left</label>
+      <div class="btnrow"><select id="f-clock-from"></select><span class="range-dash">&ndash;</span><select id="f-clock-to"></select></div>
+      <div class="muted small" id="f-clock-hint">Applies until the bomb is planted</div>
+      <label class="lbl" id="f-site-lbl" title="Where the bomb is planted, for post-plant moments.">
+        Plant Site</label>
+      <div class="btnrow chips" id="f-site"
+           title="Where the bomb is planted, for post-plant moments.">
+        <button data-site="any" class="on">Any</button>
+        <button data-site="A">A</button>
+        <button data-site="B">B</button>
+      </div>
+      <label class="lbl" title="Require utility burning somewhere on the map at the searched moment — anywhere; use Smoke/Molly markers to require a specific spot.">
+        Utility Active</label>
+      <div class="btnrow chips" id="f-util"
+           title="Require utility burning somewhere on the map at the searched moment — anywhere; use Smoke/Molly markers to require a specific spot.">
+        <button data-util="smoke">Smoke</button>
+        <button data-util="molly">Molly</button>
+      </div>
+      <label class="lbl">CT Buy</label>
+      <div class="btnrow buys" data-side="ct">
+        <button data-buy="pistol" class="on" title="Pistol rounds — rounds 1 and 13">pistol</button>
+        <button data-buy="eco" class="on" title="Carried equipment value: $0–$5,000 (saved weapons included)">eco</button>
+        <button data-buy="semi" class="on" title="Carried equipment value: $5,001–$16,250 (saved weapons included)">semi</button>
+        <button data-buy="full" class="on" title="Carried equipment value: $16,251+ (saved weapons included)">full</button>
+      </div>
+      <label class="lbl">T Buy</label>
+      <div class="btnrow buys" data-side="t">
+        <button data-buy="pistol" class="on" title="Pistol rounds — rounds 1 and 13">pistol</button>
+        <button data-buy="eco" class="on" title="Carried equipment value: $0–$5,000 (saved weapons included)">eco</button>
+        <button data-buy="semi" class="on" title="Carried equipment value: $5,001–$16,250 (saved weapons included)">semi</button>
+        <button data-buy="full" class="on" title="Carried equipment value: $16,251+ (saved weapons included)">full</button>
+      </div>
+      <label class="lbl">CT Alive <span id="alive-ct-val">(min, max)</span></label>
+      <div class="btnrow"><select id="f-alive-ct-min"></select><select id="f-alive-ct-max"></select></div>
+      <label class="lbl">T Alive <span id="alive-t-val">(min, max)</span></label>
+      <div class="btnrow"><select id="f-alive-t-min"></select><select id="f-alive-t-max"></select></div>
+    </details>
+
+    <button id="search-btn" class="primary">Search</button>
+    <div id="resolved" class="muted small"></div>
+
+    <hr>
+    <div id="demos-row" class="app-only">
+      <label class="lbl lbl-hdr">Demos</label>
+      <button id="scan-btn" title="Only new files are parsed; already-indexed demos are skipped">Scan folder for new demos</button>
+      <div id="scan-progress" class="muted small"></div>
+      <div id="demo-count" class="muted small"></div>
+      <button id="demos-settings-link" class="linkbtn small">Demos folder &amp; index settings&hellip;</button>
+    </div>
+    <footer id="sidebar-footer">
+      <a class="foot-link app-only" href="https://x.com/ItsBrokas" target="_blank" rel="noopener">
+        <img class="x-ico" src="icons/x_logo.webp" alt="X"> For updates and questions, visit @ItsBrokas
+      </a>
+      <a class="foot-link" href="https://arxiv.org/abs/2107.06495" target="_blank" rel="noopener"
+         title="ggViz: Accelerating Large-Scale Esports Game Analysis (Xenopoulos, Rulff, Silva)">
+        Tokenization inspired by ggViz
+      </a>
+      <div class="small copyright">&copy; 2026 CS2Analysis &middot; Not affiliated with Valve
+        or Counter&#8209;Strike&nbsp;2</div>
+    </footer>
+  </aside>
+
+  <main id="board-wrap">
+    <div id="canvas-holder">
+      <canvas id="board" width="1024" height="1024"></canvas>
+      <div class="map-brand">
+        <img src="icons/cs2analysis.svg" alt="CS2Analysis">
+        <span class="wm">DemoQuery<span>CS2</span></span>
+      </div>
+      <div id="level-overlay" hidden>
+        <span class="lbl-sm">Toggle Map Level</span>
+        <div class="btnrow">
+          <button id="level-upper" class="lvl active-lvl">Upper</button>
+          <button id="level-lower" class="lvl">Lower</button>
+        </div>
+      </div>
+    </div>
+    <div class="board-footer">
+      <span id="marker-summary" class="muted small"></span>
+    </div>
+  </main>
+
+  <section id="results-panel">
+    <h2 id="results-title">Results</h2>
+    <div id="stats-strip" hidden></div>
+    <div id="results-list"></div>
+  </section>
+</div>
+
+<div id="tutorial-modal" hidden>
+  <div id="tutorial-box">
+    <div id="tutorial-head">
+      <span>How DemoQuery<b>CS2</b> works</span>
+      <button id="tutorial-close">&times;</button>
+    </div>
+    <ol>
+      <li><b>Sketch a scenario.</b> Pick a map, choose a side (CT/T), and click the radar to
+        place up to five players per side. Smoke and Molly brushes add utility markers that
+        require a smoke or fire burning there. Right-click removes a marker; multi-level maps
+        have an Upper/Lower toggle.</li>
+      <li><b>Tune the match.</b> The tolerance slider sets how far real positions may be from
+        your sketch, in game units (0 = the exact zone; ~145u is one smoke radius). Filters narrow
+        by round phase, plant site, economy, the round clock and players alive. With no
+        markers at all, Search finds situations from filters alone &mdash; e.g. every 3v2 with
+        under 0:40 on the clock.</li>
+      <li><b>Search &amp; watch.</b> Results are real pro rounds ranked by how closely they match.
+        A <b>Scenario stats</b> strip above them shows win rates, win conditions, timing and
+        economy for the matched rounds. Click any result to watch it as a 2D replay &mdash;
+        kill feed, bomb location and player view directions included.</li>
+    </ol>
+    <label class="chk" id="tutorial-dontshow-row">
+      <input type="checkbox" id="tutorial-dontshow"> Do not show again</label>
+    <button id="tutorial-got-it" class="primary">Got it</button>
+  </div>
+</div>
+
+<div id="settings-modal" hidden>
+  <div id="settings-box">
+    <div id="settings-head">
+      <span>Settings</span>
+      <button id="settings-close">&times;</button>
+    </div>
+    <div class="set-section">Display</div>
+    <label class="chk" title="Show the zones positions snap to when matching">
+      <input type="checkbox" id="show-zones"> Show zones overlay on the radar</label>
+    <label class="chk">
+      <input type="checkbox" id="show-tutorial-launch"> Show &ldquo;How it works&rdquo; on launch</label>
+    <label class="chk" title="Once per launch, ask github.com if a newer release exists — the app's only network call. New versions show a sidebar notice.">
+      <input type="checkbox" id="check-updates"> Check for updates on launch</label>
+    <div class="set-section">Demos folder</div>
+    <div class="muted small demos-hint">The folder containing your demo files (.dem).
+      &ldquo;Scan folder for new demos&rdquo; indexes new files from here.</div>
+    <div id="demos-dir-row">
+      <div id="demos-dir-path" class="mono small" title="Current demos folder"></div>
+      <div class="btnrow">
+        <button id="pick-demos-btn" title="Choose your demos folder">Browse&hellip;</button>
+        <button id="open-demos-btn" title="Open the demos folder in Explorer">Open</button>
+        <button id="reset-demos-btn" title="Use the default folder">Default</button>
+      </div>
+      <div id="demos-dir-msg" class="muted small"></div>
+    </div>
+    <div class="set-section">Index</div>
+    <div class="muted small demos-hint">Removes all parsed demo data from the index.
+      Your .dem files are never touched.</div>
+    <button id="clear-index-btn">Clear indexed maps</button>
+  </div>
+</div>
+
+<div id="confirm-modal" hidden>
+  <div id="confirm-box">
+    <div id="confirm-title"></div>
+    <div id="confirm-text"></div>
+    <div class="btnrow confirm-actions">
+      <button id="confirm-cancel">Cancel</button>
+      <button id="confirm-ok" class="danger">OK</button>
+    </div>
+  </div>
+</div>
+
+<div id="mobile-note">
+  <div>
+    <div class="logo">DemoQuery<span>CS2</span></div>
+    <p>This interactive demo is best experienced on a desktop browser.</p>
+  </div>
+</div>
+
+<div id="playback-modal" hidden>
+  <div id="playback-box">
+    <div id="playback-head">
+      <div id="pb-links">
+        <a id="pb-hltv" class="web-only" href="https://www.hltv.org" target="_blank" rel="noopener"
+           data-tip="Find this match on HLTV"><img id="pb-hltv-logo" alt="" hidden>HLTV&nbsp;&#8599;</a>
+      </div>
+      <div id="pb-match">
+        <span id="pb-team-ct" class="pb-team ct"></span>
+        <span id="pb-score-ct" class="pb-score"></span>
+        <div id="pb-center">
+          <div id="pb-clock"></div>
+          <div id="pb-round-label"></div>
+        </div>
+        <span id="pb-score-t" class="pb-score"></span>
+        <span id="pb-team-t" class="pb-team t"></span>
+      </div>
+      <div id="pb-head-right">
+        <button id="playback-close">&times;</button>
+      </div>
+    </div>
+    <div id="pb-main">
+      <div id="pb-side-ct" class="pb-side"></div>
+      <div id="playback-stage">
+        <canvas id="playback-canvas" width="1024" height="1024"></canvas>
+        <div id="pb-killfeed"></div>
+        <div class="map-brand">
+          <img src="icons/cs2analysis.svg" alt="CS2Analysis">
+          <span class="wm">DemoQuery<span>CS2</span></span>
+        </div>
+        <div id="pb-result" hidden></div>
+      </div>
+      <div id="pb-right">
+        <div id="pb-side-t" class="pb-side"></div>
+      </div>
+    </div>
+    <div id="playback-controls">
+      <button id="pb-play">&#9654;</button>
+      <div id="pb-scrub-wrap">
+        <input type="range" id="pb-scrub" min="0" max="100" value="0" step="0.1">
+        <div id="pb-kill-marks"></div>
+      </div>
+      <span id="pb-time" class="small"><span id="pb-elapsed">0:00</span><img id="pb-bomb-ind"
+        class="pb-bomb" src="icons/weapons/c4.svg" alt="bomb planted"
+        data-tip="Bomb planted" style="visibility:hidden"></span>
+      <select id="pb-speed">
+        <option value="1">1&times;</option>
+        <option value="2" selected>2&times;</option>
+        <option value="4">4&times;</option>
+        <option value="8">8&times;</option>
+      </select>
+      <div id="pb-levels" class="btnrow" hidden>
+        <button id="pb-upper" class="lvl active-lvl">Upper</button>
+        <button id="pb-lower" class="lvl">Lower</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script src="sketch.js"></script>
+<script src="results.js"></script>
+<script src="playback.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

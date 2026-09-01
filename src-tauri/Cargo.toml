@@ -1,0 +1,19 @@
+[package]
+name = "demoquerycs2"
+version = "1.0.0"
+description = "Sketch a CS2 scenario, find every matching moment in your demos"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-updater = "2"
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+strip = true
+lto = true

@@ -1,0 +1,74 @@
+{
+ "cs_italy": {
+  "pos_x": -2647,
+  "pos_y": 2592,
+  "scale": 4.6,
+  "lower_level_max_units": -1000000.0
+ },
+ "cs_office": {
+  "pos_x": -1838,
+  "pos_y": 1858,
+  "scale": 4.1,
+  "lower_level_max_units": -1000000.0
+ },
+ "de_ancient": {
+  "pos_x": -2953,
+  "pos_y": 2164,
+  "scale": 5.0,
+  "lower_level_max_units": -1000000.0
+ },
+ "de_anubis": {
+  "pos_x": -2796,
+  "pos_y": 3328,
+  "scale": 5.22,
+  "lower_level_max_units": -1000000.0
+ },
+ "de_dust2": {
+  "pos_x": -2476,
+  "pos_y": 3239,
+  "scale": 4.4,
+  "lower_level_max_units": -1000000.0
+ },
+ "de_inferno": {
+  "pos_x": -2087,
+  "pos_y": 3870,
+  "scale": 4.9,
+  "lower_level_max_units": -1000000.0
+ },
+ "de_mirage": {
+  "pos_x": -3230,
+  "pos_y": 1713,
+  "scale": 5.0,
+  "lower_level_max_units": -1000000.0
+ },
+ "de_nuke": {
+  "pos_x": -3453,
+  "pos_y": 2887,
+  "scale": 7.0,
+  "lower_level_max_units": -495.0
+ },
+ "de_overpass": {
+  "pos_x": -4831,
+  "pos_y": 1781,
+  "scale": 5.2,
+  "lower_level_max_units": -1000000.0
+ },
+ "de_train": {
+  "pos_x": -2308,
+  "pos_y": 2078,
+  "scale": 4.082077,
+  "lower_level_max_units": -50.0
+ },
+ "de_vertigo": {
+  "pos_x": -3168,
+  "pos_y": 1762,
+  "scale": 4.0,
+  "lower_level_max_units": 11700.0
+ },
+ "de_cache": {
+  "pos_x": -2000.0,
+  "pos_y": 3250.0,
+  "scale": 5.5,
+  "lower_level_max_units": -1000000.0
+ }
+}

@@ -17,25 +17,15 @@ Draw hypothetical CT/T positions on a map, set a similarity tolerance (in game u
 
 ## Download
 
-Latest Windows installer: **[Releases](https://github.com/TheBrokas/DemoQueryCS2/releases)** —
+**[Download DemoQueryCS2 v1.0.0](https://github.com/TheBrokas/DemoQueryCS2/releases/download/v1.0.0/DemoQueryCS2-setup.exe)** (Windows) —
 free for personal and team use (see [LICENSE.txt](LICENSE.txt)).
+
+The installer is unsigned — SmartScreen will warn; choose "More info" → "Run anyway".
+Verify the download if you like with `Get-FileHash <file> -Algorithm SHA256`:
 
 | Version | SHA-256 |
 |---|---|
-| 0.3.0 (`DemoQueryCS2_0.3.0_x64-setup.exe`) | `40f3b9722291dcff19e5f260d334df86b68626b0b91d7960e7a60584ccb3e1c1` |
-| 0.2.2 (`DemoQueryCS2_0.2.2_x64-setup.exe`) | `8000baf5ca9d9becdcb2b98171c3aa54af4315cdef3c6df66548eddf3666c828` |
-| 0.2.1 (`DemoQueryCS2_0.2.1_x64-setup.exe`) | `1143b7f311293ddd991314862097587d9ce631cf57fe474fbd5653bd3d5a8158` |
-| 0.2.0 (`DemoQueryCS2_0.2.0_x64-setup.exe`) | `cfd4e6276dd2aa6a41d25c5885e119c051e7a47b25b54251260713d71c5ba490` |
-| 0.1.0 (`DemoQueryCS2_0.1.0_x64-setup.exe`) | `c09748daf45df526c9ade87a9ebd0ae44934d7dd4bff64b27caa8e810fef478a` |
-
-Verify after downloading: `Get-FileHash <file> -Algorithm SHA256`. The installer is
-unsigned — SmartScreen will warn; choose "More info" → "Run anyway".
-
-**Updates:** the app offers new versions at launch (one-click install-and-restart,
-signed update manifest; your demo library and settings are kept). It asks
-github.com once per launch whether a newer release exists — the app's only
-network call; parsing and search stay fully offline. Disable in Settings or with
-`CS2SF_NO_UPDATE_CHECK=1`.
+| 1.0.0 (`DemoQueryCS2-setup.exe`) | `8d76aee537e9b44287b28158686da43add649ae0bbadedd7a4e2742704a050bc` |
 
 Prefer not to run a downloaded unsigned exe? You can run or build the app from
 source instead — see [Quick start](#quick-start-development) (run directly, no

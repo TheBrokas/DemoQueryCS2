@@ -77,7 +77,7 @@ then draw and search.
 
 ## Maps
 
-Bundled: Mirage, Dust2, Inferno, Nuke (2 levels), Ancient, Anubis, Overpass, Train (2 levels), Vertigo (2 levels), Italy, Office. Cache has no public nav-mesh data yet, so Cache demos are skipped with a clear error. Custom radar images can be dropped in `maps_override/`.
+Bundled: Mirage, Dust2, Inferno, Nuke (2 levels), Ancient, Anubis, Cache, Overpass, Train (2 levels), Vertigo (2 levels), Italy, Office. Custom radar images can be dropped in `maps_override/`.
 
 ## Development
 

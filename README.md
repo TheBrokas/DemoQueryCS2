@@ -17,7 +17,7 @@ Draw hypothetical CT/T positions on a map, set a similarity tolerance (in game u
 
 ## Download
 
-**[Download DemoQueryCS2 v1.0.0](https://github.com/TheBrokas/DemoQueryCS2/releases/download/v1.0.0/DemoQueryCS2-setup.exe)** (Windows) —
+**[Download DemoQueryCS2 v1.0.1](https://github.com/TheBrokas/DemoQueryCS2/releases/download/v1.0.1/DemoQueryCS2-setup.exe)** (Windows) —
 free for personal and team use (see [LICENSE.txt](LICENSE.txt)).
 
 The installer is unsigned — SmartScreen will warn; choose "More info" → "Run anyway".
@@ -25,7 +25,7 @@ Verify the download if you like with `Get-FileHash <file> -Algorithm SHA256`:
 
 | Version | SHA-256 |
 |---|---|
-| 1.0.0 (`DemoQueryCS2-setup.exe`) | `8d76aee537e9b44287b28158686da43add649ae0bbadedd7a4e2742704a050bc` |
+| 1.0.1 (`DemoQueryCS2-setup.exe`) | `a21453830bc9d00b75ad21375a1b530f601ee556f2b8b352da3a31c52c550217` |
 
 Prefer not to run a downloaded unsigned exe? You can run or build the app from
 source instead — see [Quick start](#quick-start-development) (run directly, no

@@ -25,6 +25,8 @@ def _stub_index(n=6):
         winner_code=np.array([1, 1, 2, 1, 2, 2], dtype=np.int8),
         # Alpha, Alpha, Beta, unknown, Alpha, Beta
         ct_team_code=np.array([0, 0, 1, -1, 0, 1], dtype=np.int32),
+        # T team is the other side: Beta, Beta, Alpha, unknown, Beta, Alpha
+        t_team_code=np.array([1, 1, 0, -1, 1, 0], dtype=np.int32),
         team_names=["Alpha", "Beta"],
         #                 smoke active in states 1 and 2, molly in state 3
         smoke=engine.UtilCSR.from_dense(
@@ -104,6 +106,25 @@ def test_pistol_is_exclusive_buy_category():
     assert list(np.nonzero(m)[0]) == [1]
     m = engine._filter_mask(idx, {"t_buy": ["pistol", "eco", "semi", "full"]})
     assert m.all()
+
+
+def test_team_side_filter():
+    idx = _stub_index()
+    # Alpha on CT: ct_team_code == 0
+    m = engine._filter_mask(idx, {"team": "Alpha", "team_side": "ct"})
+    assert list(np.nonzero(m)[0]) == [0, 1, 4]
+    # Alpha on T: t_team_code == 0
+    m = engine._filter_mask(idx, {"team": "Alpha", "team_side": "t"})
+    assert list(np.nonzero(m)[0]) == [2, 5]
+    # Alpha either side (no/blank side): union, minus the unknown-team state 3
+    m = engine._filter_mask(idx, {"team": "Alpha"})
+    assert list(np.nonzero(m)[0]) == [0, 1, 2, 4, 5]
+    m = engine._filter_mask(idx, {"team": "Alpha", "team_side": "any"})
+    assert list(np.nonzero(m)[0]) == [0, 1, 2, 4, 5]
+    # a team not in this map's data matches nothing
+    assert not engine._filter_mask(idx, {"team": "Nobody"}).any()
+    # no team selected = no filter
+    assert engine._filter_mask(idx, {"team": None}).all()
 
 
 def test_smoke_molly_active_chips():

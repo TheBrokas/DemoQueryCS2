@@ -136,6 +136,8 @@ class SearchFilters(BaseModel):
     time_left: list[int] | None = None        # pre-plant round clock, seconds remaining
     smoke_active: bool | None = None
     molly_active: bool | None = None
+    team: str | None = None                   # clan name; restrict to rounds this team plays
+    team_side: str | None = None              # "ct" | "t" | None/"any" — which side the team is on
 
 
 class SearchRequest(BaseModel):
@@ -319,6 +321,23 @@ def maps() -> list[dict]:
     if config.DEMO_MODE:
         _maps_cache = out
     return out
+
+
+@app.get("/api/teams")
+def teams(map_name: str) -> list[str]:
+    """Distinct team (clan) names indexed for a map — populates the team filter."""
+    conn = dbmod.connect()
+    try:
+        names: set[str] = set()
+        for col in ("team1", "team2"):        # col is a fixed literal, never user input
+            for row in conn.execute(
+                    f"SELECT DISTINCT {col} FROM demos "
+                    f"WHERE map_name = ? AND status = 'ok' AND {col} IS NOT NULL AND {col} <> ''",
+                    (map_name,)):
+                names.add(row[col])
+    finally:
+        conn.close()
+    return sorted(names, key=str.casefold)
 
 
 @app.get("/api/maps/{map_name}/radar")

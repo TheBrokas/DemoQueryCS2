@@ -55,6 +55,14 @@
     <details id="filters" open>
       <summary class="lbl-hdr">Filters
         <button id="f-reset" class="linkbtn" title="Reset every filter below to its default">reset</button></summary>
+      <label class="lbl" title="Only include rounds where the chosen team is playing — optionally on a specific side.">
+        Team</label>
+      <div class="btnrow"><select id="f-team"><option value="">Any team</option></select></div>
+      <div class="btnrow chips" id="f-team-side" title="Which side the chosen team is on for the searched moment.">
+        <button data-tside="any" class="on">Any</button>
+        <button data-tside="ct">CT</button>
+        <button data-tside="t">T</button>
+      </div>
       <label class="lbl" title="Which phase of the round to search. The round clock filters the pre-plant phase; the plant site filters the post-plant phase.">
         Round Phase</label>
       <div class="btnrow chips" id="f-phase"

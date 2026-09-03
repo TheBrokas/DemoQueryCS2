@@ -78,6 +78,13 @@ const App = {
           this.updatePhaseUI();
         }));
     }
+    // team side is pick-one too, but doesn't touch the phase/site UI
+    document.querySelectorAll("#f-team-side button").forEach((b) =>
+      b.addEventListener("click", () => {
+        document.querySelectorAll("#f-team-side button").forEach((o) => o.classList.remove("on"));
+        b.classList.add("on");
+      }));
+    document.getElementById("f-team").addEventListener("change", () => this.updateTeamUI());
     document.getElementById("show-zones").addEventListener("change", async (e) => {
       Sketch.showOverlay = e.target.checked;
       if (Sketch.showOverlay) await Sketch.loadNodes().catch(() => {});
@@ -169,6 +176,10 @@ const App = {
       document.getElementById(`f-alive-${side}-min`).value = 0;
       document.getElementById(`f-alive-${side}-max`).value = 5;
     }
+    document.getElementById("f-team").value = "";
+    document.querySelectorAll("#f-team-side button").forEach((b) =>
+      b.classList.toggle("on", b.dataset.tside === "any"));
+    this.updateTeamUI();
     this.updatePhaseUI();
   },
 
@@ -325,6 +336,26 @@ const App = {
     document.getElementById("resolved").textContent = "";
     Stats.clear();
     this.renderEmptyState();
+    await this.loadTeams(name);
+  },
+
+  async loadTeams(mapName) {
+    const sel = document.getElementById("f-team");
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">Any team</option>';
+    try {
+      const teams = await API.get(`/api/teams?map_name=${encodeURIComponent(mapName)}`);
+      for (const t of teams) sel.add(new Option(t, t));
+      if (prev && teams.includes(prev)) sel.value = prev;   // keep the pick if this map has it
+    } catch (e) { /* leave "Any team" */ }
+    this.updateTeamUI();
+  },
+
+  updateTeamUI() {
+    // the side toggle only means something once a team is chosen
+    const off = !document.getElementById("f-team").value;
+    document.querySelectorAll("#f-team-side button").forEach((b) => { b.disabled = off; });
+    document.querySelector("label[title^='Only include rounds']")?.classList.toggle("dim", off);
   },
 
   setSide(s) {
@@ -389,6 +420,7 @@ const App = {
     }
     const utilOn = (u) =>
       document.querySelector(`#f-util button[data-util=${u}].on`) ? true : null;
+    const team = document.getElementById("f-team").value || null;
     return {
       bomb_sites: sites,
       smoke_active: utilOn("smoke"),
@@ -398,6 +430,8 @@ const App = {
       alive_ct: [+document.getElementById("f-alive-ct-min").value, +document.getElementById("f-alive-ct-max").value],
       alive_t: [+document.getElementById("f-alive-t-min").value, +document.getElementById("f-alive-t-max").value],
       time_left: [+document.getElementById("f-clock-from").value, +document.getElementById("f-clock-to").value],
+      team,
+      team_side: team ? document.querySelector("#f-team-side button.on").dataset.tside : null,
     };
   },
 

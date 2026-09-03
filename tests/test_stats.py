@@ -44,6 +44,7 @@ def _stats_index():
         bomb_site=np.zeros(n, dtype=np.int8),
         winner_code=winner,
         ct_team_code=np.full(n, -1, dtype=np.int32),
+        t_team_code=np.full(n, -1, dtype=np.int32),
         team_names=[],
         smoke=_empty_csr(n, engine.MAX_ACTIVE_SMOKES),
         molly=_empty_csr(n, engine.MAX_ACTIVE_MOLLIES),

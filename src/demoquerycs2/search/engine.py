@@ -104,7 +104,8 @@ class MapIndex:
     bomb_site: np.ndarray      # 0 none, 1 A, 2 B
     winner_code: np.ndarray    # (N,) int8 round winner: 0 unknown, 1 CT, 2 T
     ct_team_code: np.ndarray   # (N,) int32 index into team_names; -1 = unknown
-    team_names: list[str]      # distinct clan names seen on CT, code order
+    t_team_code: np.ndarray    # (N,) int32 index into team_names; -1 = unknown
+    team_names: list[str]      # distinct clan names seen on either side, code order
     smoke: UtilCSR
     molly: UtilCSR
     # positions blobs deliberately NOT held in RAM (~240B/state): stage 2 and
@@ -170,17 +171,30 @@ def _load_index(map_name: str) -> MapIndex:
         bomb_site = np.empty(n, dtype=np.int8)
         winner_code = np.empty(n, dtype=np.int8)
         ct_team_code = np.empty(n, dtype=np.int32)
+        t_team_code = np.empty(n, dtype=np.int32)
         tok_buf = bytearray(n * TOKEN_LEN)
         team_codes: dict[str, int] = {}
         team_names: list[str] = []
 
+        def _team_code(name):
+            """Intern a clan name into a shared code, so CT and T share one table."""
+            if not name:
+                return -1
+            code = team_codes.get(name)
+            if code is None:
+                code = team_codes[name] = len(team_names)
+                team_names.append(name)
+            return code
+
         # positions blobs are intentionally not selected: they dominate row size
-        # and the index never stores them (fetched on demand at search time)
+        # and the index never stores them (fetched on demand at search time).
+        # d.team1/d.team2 give both teams; the T-side team is the one that isn't CT.
         cur = conn.execute(
             "SELECT s.state_id, s.round_id, s.demo_id, s.tick, s.round_time_s, s.token, "
             "s.bomb_planted, s.alive_ct, s.alive_t, r.ct_buy, r.t_buy, r.bomb_site, "
-            "r.is_pistol, r.ct_team, r.winner "
+            "r.is_pistol, r.ct_team, r.winner, d.team1, d.team2 "
             "FROM states s JOIN rounds r ON r.round_id = s.round_id "
+            "JOIN demos d ON d.demo_id = s.demo_id "
             "WHERE s.map_name = ? ORDER BY s.state_id", (map_name,))
         i = 0
         while True:
@@ -202,18 +216,15 @@ def _load_index(map_name: str) -> MapIndex:
             bomb_site[i:j] = [site_code.get(r["bomb_site"], 0) for r in rows]
             winner_code[i:j] = [WINNER_CODE.get(r["winner"], 0) for r in rows]
             tok_buf[i * TOKEN_LEN:j * TOKEN_LEN] = b"".join(r["token"] for r in rows)
-            codes = []
+            ct_codes, t_codes = [], []
             for r in rows:
-                name = r["ct_team"]
-                if not name:
-                    codes.append(-1)
-                    continue
-                code = team_codes.get(name)
-                if code is None:
-                    code = team_codes[name] = len(team_names)
-                    team_names.append(name)
-                codes.append(code)
-            ct_team_code[i:j] = codes
+                ct = r["ct_team"]
+                t1, t2 = r["team1"], r["team2"]
+                t = t1 if (ct and ct == t2) else (t2 if (ct and ct == t1) else None)
+                ct_codes.append(_team_code(ct))
+                t_codes.append(_team_code(t))
+            ct_team_code[i:j] = ct_codes
+            t_team_code[i:j] = t_codes
             i = j
 
         gren = conn.execute(
@@ -250,6 +261,7 @@ def _load_index(map_name: str) -> MapIndex:
         bomb_site=bomb_site,
         winner_code=winner_code,
         ct_team_code=ct_team_code,
+        t_team_code=t_team_code,
         team_names=team_names,
         smoke=smoke,
         molly=molly,
@@ -308,6 +320,19 @@ def _filter_mask(idx: MapIndex, f: dict) -> np.ndarray:
         want = f.get(key)
         if want is not None:
             mask &= csr.has_any() == bool(want)
+    team = f.get("team")
+    if team:
+        try:
+            code = idx.team_names.index(team)
+        except ValueError:
+            code = -2                          # team not in this map's data: matches nothing
+        side = (f.get("team_side") or "any").lower()
+        if side == "ct":
+            mask &= idx.ct_team_code == code
+        elif side == "t":
+            mask &= idx.t_team_code == code
+        else:                                  # either side
+            mask &= (idx.ct_team_code == code) | (idx.t_team_code == code)
     return mask
 
 

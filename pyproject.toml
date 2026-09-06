@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "demoquerycs2"
-version = "1.0.1"
+version = "1.1.0"
 description = "Sketch a CS2 scenario on the radar and find matching moments in your own demos (ggViz-style retrieval)."
 requires-python = ">=3.11"
 dependencies = [

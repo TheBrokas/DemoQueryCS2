@@ -6,6 +6,10 @@ const App = {
   maps: [],
   current: null,
   scanTimer: null,
+  searchSeq: 0,
+  mapSeq: 0,
+  teamsSeq: 0,
+  ready: false,
 
   demoMode: false,
   indexedOk: null,          // demos indexed OK; null until first /api/demos fetch
@@ -29,10 +33,12 @@ const App = {
         logo.href = "https://cs2analysis.com/agents/compare";
         logo.target = "_top";
       }
-    } catch (e) { /* ignore */ }
+    } catch (e) { throw new Error("Could not connect to DemoQuery. Reload to try again."); }
     this.checkUpdate();
     await this.maybeShowTutorial();
     await this.refreshMaps();
+    this.ready = true;
+    if (window.parent !== window) window.parent.postMessage({ dqReady: true }, "*");
     await this.refreshDemoCount();
     if (!this.demoMode) { await this.refreshDemosDir(); this.pollScanOnce(); }
     if (this.demoMode) {
@@ -52,6 +58,7 @@ const App = {
   },
 
   bindControls() {
+    TeamCores.init();
     document.getElementById("map-select").addEventListener("change", (e) => this.selectMap(e.target.value));
     for (const s of ["ct", "t", "smoke", "molly"]) {
       document.getElementById(`side-${s}`).addEventListener("click", () => this.setSide(s));
@@ -161,6 +168,7 @@ const App = {
   openSettings() {
     document.getElementById("settings-modal").hidden = false;
     this.refreshIndexSize();
+    TeamCores.load();
   },
 
   resetFilters() {
@@ -324,30 +332,53 @@ const App = {
   },
 
   async selectMap(name) {
+    const seq = ++this.mapSeq;
+    this.invalidateSearch();
     this.current = this.maps.find((m) => m.map_name === name) || null;
-    if (!this.current) return;
-    document.getElementById("map-stats").textContent =
-      `${this.current.n_states.toLocaleString()} states · ${this.current.k} nodes`;
-    await Sketch.setMap(this.current);
-    this.setLevel("upper");
-    this.updateMarkerSummary();
-    document.getElementById("results-list").innerHTML = "";
-    document.getElementById("results-title").textContent = "Results";
-    document.getElementById("resolved").textContent = "";
-    Stats.clear();
-    this.renderEmptyState();
-    await this.loadTeams(name);
+    if (!this.current) { this.mapLoading = false; return false; }
+    this.mapLoading = true;
+    document.getElementById("search-btn").disabled = true;
+    try {
+      document.getElementById("map-stats").textContent =
+        `${this.current.n_states.toLocaleString()} states · ${this.current.k} nodes`;
+      await Sketch.setMap(this.current);
+      if (seq !== this.mapSeq) return false;
+      this.setLevel("upper");
+      this.updateMarkerSummary();
+      document.getElementById("results-list").innerHTML = "";
+      document.getElementById("results-title").textContent = "Results";
+      document.getElementById("resolved").textContent = "";
+      Stats.clear();
+      this.renderEmptyState();
+      await this.loadTeams(name);
+      return seq === this.mapSeq;
+    } catch (e) {
+      if (seq !== this.mapSeq) return false;
+      this.current = null;
+      this.showError("This map could not load. Select another map or reload to retry.");
+      return false;
+    } finally {
+      if (seq === this.mapSeq) {
+        this.mapLoading = false;
+        document.getElementById("search-btn").disabled = !this.current;
+      }
+    }
   },
 
   async loadTeams(mapName) {
+    const seq = ++this.teamsSeq;
     const sel = document.getElementById("f-team");
     const prev = sel.value;
     sel.innerHTML = '<option value="">Any team</option>';
     try {
       const teams = await API.get(`/api/teams?map_name=${encodeURIComponent(mapName)}`);
+      if (seq !== this.teamsSeq || this.current?.map_name !== mapName) return;
       for (const t of teams) sel.add(new Option(t, t));
       if (prev && teams.includes(prev)) sel.value = prev;   // keep the pick if this map has it
-    } catch (e) { /* leave "Any team" */ }
+    } catch (e) {
+      if (seq !== this.teamsSeq || this.current?.map_name !== mapName) return;
+      document.getElementById("resolved").textContent = "Team names could not load. Select this map again to retry.";
+    }
     this.updateTeamUI();
   },
 
@@ -437,6 +468,23 @@ const App = {
 
   searchLimit: 50,
 
+  invalidateSearch() {
+    this.searchSeq++;
+    this.lastQueryHash = "";
+    const btn = document.getElementById("search-btn");
+    btn.disabled = false;
+    btn.textContent = "Search";
+  },
+
+  showError(message) {
+    const list = document.getElementById("results-list");
+    const text = document.createElement("div");
+    text.className = "muted small";
+    text.setAttribute("role", "status");
+    text.textContent = message;
+    list.replaceChildren(text);
+  },
+
   // "Load more": re-run the same query for a bigger page, keeping the scroll spot
   async loadMore() {
     const btn = document.getElementById("load-more");
@@ -446,7 +494,10 @@ const App = {
   },
 
   async search(opts = {}) {
-    if (!this.current) return;
+    if (!this.current || this.mapLoading) return;
+    const seq = ++this.searchSeq;
+    const map = this.current;
+    this.lastQueryHash = "";
     if (!this.demoMode && this.indexedOk === 0) {
       this.renderEmptyState(true);      // searching an empty index: re-show the setup steps
       return;
@@ -476,7 +527,8 @@ const App = {
         filters,
         limit: this.searchLimit,
       });
-      Results.render(res, this.current, filters);
+      if (seq !== this.searchSeq) return;
+      Results.render(res, map, filters);
       if (keepScroll) panel.scrollTop = keepScroll;
       const fmtSide = (arr) => arr.map((p) => p.label || "?").join(", ") || "—";
       let resolved = `query → CT: ${fmtSide(res.resolved.ct)} | T: ${fmtSide(res.resolved.t)}`;
@@ -484,12 +536,14 @@ const App = {
       if ((res.resolved.molly || []).length) resolved += ` | Molly: ${fmtSide(res.resolved.molly)}`;
       document.getElementById("resolved").textContent = resolved;
     } catch (err) {
+      if (seq !== this.searchSeq) return;
       Stats.clear();
-      document.getElementById("results-list").innerHTML =
-        `<div class="muted small">Error: ${err.message}</div>`;
+      this.showError(`Search failed: ${err.message} Try searching again.`);
     } finally {
-      btn.disabled = false;
-      btn.textContent = "Search";
+      if (seq === this.searchSeq) {
+        btn.disabled = false;
+        btn.textContent = "Search";
+      }
     }
   },
 
@@ -633,4 +687,18 @@ const App = {
   },
 };
 
-window.addEventListener("DOMContentLoaded", () => App.init());
+window.addEventListener("message", event => {
+  if (event.source === window.parent && event.data?.dqPing && App.ready) {
+    window.parent.postMessage({ dqReady: true }, event.origin);
+  }
+});
+window.addEventListener("DOMContentLoaded", () => App.init().catch(() => {
+  document.getElementById("tutorial-modal").hidden = true;
+  App.showError("DemoQuery could not load. Reload to reconnect.");
+  const retry = document.createElement("button");
+  retry.className = "btn";
+  retry.textContent = "Reload DemoQuery";
+  retry.addEventListener("click", () => location.reload());
+  document.getElementById("results-list").appendChild(retry);
+  if (window.parent !== window) window.parent.postMessage({ dqError: true }, "*");
+}));

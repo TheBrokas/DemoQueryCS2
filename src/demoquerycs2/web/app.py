@@ -15,7 +15,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from .. import __version__, config, db as dbmod, mapdata, updatecheck
+from .. import __version__, config, db as dbmod, mapdata, updatecheck, team_cores
 from ..ingest import scanner
 from ..ingest.tokenizer import unpack_path, unpack_positions
 from ..search import engine
@@ -185,6 +185,56 @@ class DemosDir(BaseModel):
     path: str | None = None
 
 
+class TeamCore(BaseModel):
+    core_id: int | None = Field(default=None, ge=1)
+    name: str = Field(min_length=1, max_length=60)
+    steamids: list[str] = Field(min_length=3, max_length=5)
+
+
+class TeamCoreId(BaseModel):
+    core_id: int = Field(ge=1)
+
+
+@app.get("/api/settings/team-cores")
+def get_team_cores() -> dict:
+    _demo_forbidden()
+    conn = dbmod.connect()
+    try:
+        return {"players": team_cores.players(conn), "cores": team_cores.list_cores(conn)}
+    finally:
+        conn.close()
+
+
+@app.post("/api/settings/team-cores")
+def save_team_core(body: TeamCore) -> dict:
+    _demo_forbidden()
+    conn = dbmod.connect()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            core_id = team_cores.save(conn, body.name, body.steamids, body.core_id)
+        except ValueError as e:
+            raise HTTPException(400, str(e)) from e
+        conn.commit()
+    finally:
+        conn.close()
+    engine.invalidate()
+    return {"ok": True, "core_id": core_id}
+
+
+@app.post("/api/settings/team-cores/delete")
+def delete_team_core(body: TeamCoreId) -> dict:
+    _demo_forbidden()
+    conn = dbmod.connect()
+    try:
+        conn.execute("DELETE FROM team_cores WHERE core_id=?", (body.core_id,))
+        conn.commit()
+    finally:
+        conn.close()
+    engine.invalidate()
+    return {"ok": True}
+
+
 def _demos_dir_state() -> dict:
     return {"demos_dir": str(config.DEMOS_DIR), "is_default": config.is_default_demos_dir()}
 
@@ -329,6 +379,13 @@ def teams(map_name: str) -> list[str]:
     conn = dbmod.connect()
     try:
         names: set[str] = set()
+        custom = team_cores.overrides(conn, map_name)
+        if custom:
+            for row in conn.execute(
+                    "SELECT r.round_id, r.ct_team, d.team1, d.team2 FROM rounds r "
+                    "JOIN demos d ON d.demo_id=r.demo_id WHERE d.map_name=? AND d.status='ok'", (map_name,)):
+                names.update(n for n in team_cores.names(row, custom) if n)
+            return sorted(names, key=str.casefold)
         for col in ("team1", "team2"):        # col is a fixed literal, never user input
             for row in conn.execute(
                     f"SELECT DISTINCT {col} FROM demos "
@@ -492,29 +549,45 @@ def _match_context(conn, r) -> dict:
     part_ids = _recording_parts(conn, r)
     placeholders = ",".join("?" for _ in part_ids)
     raw_rows = conn.execute(
-        "SELECT round_id, round_num, winner, ct_team, demo_id FROM rounds "
-        f"WHERE demo_id IN ({placeholders}) ORDER BY demo_id, round_num", part_ids).fetchall()
+        "SELECT r.round_id, r.round_num, r.winner, r.ct_team, r.demo_id, d.team1, d.team2 "
+        "FROM rounds r JOIN demos d ON d.demo_id=r.demo_id "
+        f"WHERE r.demo_id IN ({placeholders}) ORDER BY r.demo_id, r.round_num", part_ids).fetchall()
     order = {demo_id: i for i, demo_id in enumerate(part_ids)}
     rows = sorted(raw_rows, key=lambda rr: (order[rr["demo_id"]], rr["round_num"]))
     current_index = next(i for i, rr in enumerate(rows) if rr["round_id"] == r["round_id"])
-    t1, t2 = r["team1"], r["team2"]
+    custom = team_cores.overrides(conn, r["mn"])
 
-    def other(name):
-        return t2 if name == t1 else t1 if name == t2 else None
+    def score_names(row):
+        raw = team_cores.names(row, {})
+        labels = team_cores.names(row, custom)
+        # Keep a recorded team's score identity when a core member is absent
+        # for one round. For unnamed scrims, the custom identity is the fallback.
+        keys = [original if original and original.casefold() not in
+                {"unknown", "ct", "t", "terrorists", "counter-terrorists"}
+                else label for original, label in zip(raw, labels)]
+        # An unnamed opponent still earns wins, and follows the core at halftime.
+        if keys[0] and not keys[1]:
+            keys[1] = ("opponent", keys[0])
+        elif keys[1] and not keys[0]:
+            keys[0] = ("opponent", keys[1])
+        return keys
 
-    wins: dict[str, int] = {}
+    wins: dict[str | tuple, int] = {}
     for i, rr in enumerate(rows):
-        if i >= current_index or rr["winner"] not in ("CT", "T") or not rr["ct_team"]:
+        if i >= current_index or rr["winner"] not in ("CT", "T"):
             continue
-        winner_team = rr["ct_team"] if rr["winner"] == "CT" else other(rr["ct_team"])
+        ct, t = score_names(rr)
+        winner_team = ct if rr["winner"] == "CT" else t
         if winner_team:
             wins[winner_team] = wins.get(winner_team, 0) + 1
-    ct_name = r["ct_team"]
-    t_name = other(ct_name) if ct_name else None
+    ct_name, t_name = team_cores.names(r, custom)
+    ct_score_key, t_score_key = score_names(r)
     ctx = {
         "ct_team": ct_name or "CT", "t_team": t_name or "T",
-        "ct_score": wins.get(ct_name, 0), "t_score": wins.get(t_name, 0),
-        "has_teams": bool(ct_name),
+        "ct_custom": (r["round_id"], "CT") in custom,
+        "t_custom": (r["round_id"], "T") in custom,
+        "ct_score": wins.get(ct_score_key, 0), "t_score": wins.get(t_score_key, 0),
+        "has_teams": bool(ct_name or t_name),
     }
     ctx["round_num"] = current_index + 1
     return ctx

@@ -278,6 +278,33 @@ body.demo-mode .app-only { display: none; }
   border-bottom: 1px solid var(--border); }
 #settings-box .chk { margin: 6px 0; }
 
+/* Team cores use the existing Settings palette and native, keyboard-operable controls. */
+body.demo-mode #team-cores-section { display: none; }
+#team-cores-section p { margin: 8px 0; line-height: 1.45; }
+#team-cores-section summary { cursor: pointer; }
+#core-list { display: grid; gap: 8px; margin: 12px 0; }
+.core-card { padding: 10px; background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; }
+.core-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.core-card-head strong { overflow-wrap: anywhere; }
+.core-card-head .btnrow { flex-shrink: 0; }
+.core-card-head button { font-size: 11px; padding: 4px 7px; }
+.core-card > .small { margin-top: 5px; overflow-wrap: anywhere; }
+#core-form { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 4px; }
+.core-field { display: block; margin: 10px 0 5px; font-size: 12px; color: var(--text); }
+#core-selected { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+#core-selected button { color: var(--accent); font-size: 12px; overflow-wrap: anywhere; }
+#core-players { max-height: 210px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
+.core-player { display: flex; align-items: center; gap: 9px; padding: 7px 9px; cursor: pointer; }
+.core-player + .core-player { border-top: 1px solid var(--border); }
+.core-player:hover, .core-player:focus-within { background: var(--panel2); }
+.core-player input { accent-color: var(--accent); flex-shrink: 0; }
+.core-player span { min-width: 0; overflow-wrap: anywhere; }
+.core-player small { display: block; color: var(--muted); font: 10px/1.6 var(--mono); }
+.core-actions { justify-content: flex-end; margin-top: 12px; }
+#core-save { background: var(--accent); color: var(--bg); font-weight: 600; }
+#team-cores-section button:disabled { opacity: .45; cursor: default; }
+#team-cores-section .core-error { color: #ffb4a6; }
+
 #confirm-modal { position: fixed; inset: 0; background: rgba(4, 6, 8, .82);
   display: flex; align-items: center; justify-content: center; z-index: 80; }
 #confirm-box { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;

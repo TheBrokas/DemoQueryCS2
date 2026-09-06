@@ -7,7 +7,7 @@ Usage:
       BOM). Run `cargo check` in src-tauri afterwards to refresh Cargo.lock.
 
   python scripts/release.py manifest 0.2.2 --notes "Bug fixes"
-      After `cargo tauri build` (with TAURI_SIGNING_PRIVATE_KEY_PATH set):
+      After `cargo tauri build` (with TAURI_SIGNING_PRIVATE_KEY set to the key content):
       reads the NSIS installer + .sig from src-tauri/target/release/bundle/nsis,
       writes latest.json next to them and prints the installer SHA-256 for the
       README table. Upload BOTH installers (versioned + stable-named copy) AND

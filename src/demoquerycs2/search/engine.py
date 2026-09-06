@@ -18,7 +18,7 @@ import numpy as np
 
 from .. import config
 from .. import db as dbmod
-from .. import mapdata
+from .. import mapdata, team_cores
 from ..ingest.tokenizer import TOKEN_LEN, unpack_positions
 
 BUY_CODE = {"eco": 0, "semi": 1, "full": 2, "pistol": 3}
@@ -156,6 +156,7 @@ def _load_index(map_name: str) -> MapIndex:
     try:
         # one read transaction so COUNT, states and grenades see the same snapshot
         conn.execute("BEGIN")
+        custom_teams = team_cores.overrides(conn, map_name)
         n = conn.execute("SELECT COUNT(*) FROM states WHERE map_name = ?", (map_name,)).fetchone()[0]
         state_id = np.empty(n, dtype=np.int64)
         round_id = np.empty(n, dtype=np.int64)
@@ -218,9 +219,7 @@ def _load_index(map_name: str) -> MapIndex:
             tok_buf[i * TOKEN_LEN:j * TOKEN_LEN] = b"".join(r["token"] for r in rows)
             ct_codes, t_codes = [], []
             for r in rows:
-                ct = r["ct_team"]
-                t1, t2 = r["team1"], r["team2"]
-                t = t1 if (ct and ct == t2) else (t2 if (ct and ct == t1) else None)
+                ct, t = team_cores.names(r, custom_teams)
                 ct_codes.append(_team_code(ct))
                 t_codes.append(_team_code(t))
             ct_team_code[i:j] = ct_codes
@@ -461,18 +460,23 @@ def _compute_stats(idx: MapIndex, sel_all: np.ndarray, sel_exact: np.ndarray,
         "SELECT r.round_id, r.winner, r.win_reason, r.ct_team, d.team1, d.team2 "
         "FROM rounds r JOIN demos d ON d.demo_id = r.demo_id WHERE r.round_id IN (%s)",
         [int(r) for r in exact_rids])
+    round_sides = {int(rid): (int(idx.ct_team_code[si]), int(idx.t_team_code[si]))
+                   for rid, si in zip(exact_rids, exact_reps)}
     for r in rows:
         tally = reasons_ct if r["winner"] == "CT" else reasons_t if r["winner"] == "T" else None
         if tally is not None:
             reason = r["win_reason"]
             tally[reason if reason in tally else "unknown"] += 1
-        ct_name = r["ct_team"]
+        ct_code, t_code = round_sides[r["round_id"]]
+        # Index codes carry custom identities as well as recorded clan names.
+        # Preserve the raw fallback for legacy/synthetic index callers.
+        raw_ct, raw_t = team_cores.names(r, {})
+        ct_name = idx.team_names[ct_code] if ct_code >= 0 else raw_ct
+        t_name = idx.team_names[t_code] if t_code >= 0 else raw_t
         if ct_name:
             ct_teams[ct_name] += 1
-            t_name = (r["team2"] if ct_name == r["team1"]
-                      else r["team1"] if ct_name == r["team2"] else None)
-            if t_name:
-                t_teams[t_name] += 1
+        if t_name:
+            t_teams[t_name] += 1
     stats["win_reasons"] = {"ct": reasons_ct, "t": reasons_t}
     stats["teams"] = {side: [{"name": n, "rounds": c} for n, c in teams.most_common(3)]
                       for side, teams in (("ct", ct_teams), ("t", t_teams))}
@@ -690,7 +694,7 @@ def _hydrate_moments(idx: MapIndex, moments: list[dict], conn: sqlite3.Connectio
     for m in moments:
         si = m["best_state"]
         r = conn.execute(
-            "SELECT r.round_num, r.winner, r.ct_buy, r.t_buy, r.bomb_site, r.is_pistol, "
+            "SELECT r.round_id, r.round_num, r.winner, r.ct_buy, r.t_buy, r.bomb_site, r.is_pistol, r.ct_team, "
             "d.filename, d.demo_id, d.team1, d.team2 FROM rounds r JOIN demos d ON d.demo_id = r.demo_id "
             "WHERE r.round_id = ?", (m["round_id"],)).fetchone()
         names = {row["slot"]: row["name"] for row in conn.execute(
@@ -715,11 +719,22 @@ def _hydrate_moments(idx: MapIndex, moments: list[dict], conn: sqlite3.Connectio
                                 "x": round(float(uxyz[j, 0]), 1),
                                 "y": round(float(uxyz[j, 1]), 1),
                                 "z": round(float(uxyz[j, 2]), 1)})
+        raw_ct, raw_t = team_cores.names(r, {})
+        ct = idx.team_names[int(idx.ct_team_code[si])] if idx.ct_team_code[si] >= 0 else raw_ct
+        t = idx.team_names[int(idx.t_team_code[si])] if idx.t_team_code[si] >= 0 else raw_t
+        t1, t2 = r["team1"], r["team2"]
+        if (ct, t) != (raw_ct, raw_t):
+            if raw_ct and raw_ct == t1:
+                t1, t2 = ct, t
+            elif raw_ct and raw_ct == t2:
+                t1, t2 = t, ct
+            else:
+                t1, t2 = ct or "Unknown team", t or "Unknown team"
         out.append({
             "round_id": m["round_id"],
             "exact": m.get("node_dist", 0.0) <= 1e-6,
             "demo": r["filename"],
-            "team1": r["team1"], "team2": r["team2"],
+            "team1": t1, "team2": t2,
             "round_num": r["round_num"],
             "winner": r["winner"],
             "ct_buy": r["ct_buy"], "t_buy": r["t_buy"],

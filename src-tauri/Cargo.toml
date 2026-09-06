@@ -1,6 +1,6 @@
 [package]
 name = "demoquerycs2"
-version = "1.0.1"
+version = "1.1.0"
 description = "Sketch a CS2 scenario, find every matching moment in your demos"
 edition = "2021"
 

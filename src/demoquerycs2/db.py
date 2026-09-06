@@ -8,7 +8,7 @@ from pathlib import Path
 
 from . import config
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 DDL = """
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
@@ -131,6 +131,27 @@ CREATE TABLE IF NOT EXISTS demo_players (
   steamid TEXT NOT NULL,
   name    TEXT NOT NULL,
   PRIMARY KEY (demo_id, slot)
+);
+
+-- User-defined identities survive clearing/rebuilding the demo index.
+CREATE TABLE IF NOT EXISTS team_cores (
+  core_id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL COLLATE NOCASE UNIQUE
+);
+CREATE TABLE IF NOT EXISTS team_core_players (
+  core_id INTEGER NOT NULL REFERENCES team_cores(core_id) ON DELETE CASCADE,
+  steamid TEXT NOT NULL,
+  PRIMARY KEY (core_id, steamid)
+);
+CREATE INDEX IF NOT EXISTS idx_core_player ON team_core_players(steamid);
+CREATE TABLE IF NOT EXISTS round_players (
+  round_id INTEGER NOT NULL REFERENCES rounds(round_id) ON DELETE CASCADE,
+  steamid TEXT NOT NULL,
+  side TEXT NOT NULL CHECK(side IN ('CT', 'T')),
+  PRIMARY KEY (round_id, steamid)
+);
+CREATE TABLE IF NOT EXISTS round_rosters_indexed (
+  round_id INTEGER PRIMARY KEY REFERENCES rounds(round_id) ON DELETE CASCADE
 );
 """
 

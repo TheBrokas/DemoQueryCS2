@@ -334,6 +334,10 @@ def _insert_demo(conn: sqlite3.Connection, path: Path, key: str, parsed: ParsedD
         "ON CONFLICT(map_name, node_idx, place_name) DO UPDATE SET votes = votes + excluded.votes",
         [(parsed.map_name, node, place, votes) for (node, place), votes in parsed.label_votes.items()])
 
+    # Materialize Steam-ID membership while this demo's transaction is open.
+    # Saved team cores then apply immediately, including to unnamed scrims.
+    from .. import team_cores
+    team_cores.index_rounds(conn, demo_id)
     return len(parsed.states)
 
 

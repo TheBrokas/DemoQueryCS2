@@ -214,6 +214,30 @@
       </div>
       <div id="demos-dir-msg" class="muted small"></div>
     </div>
+    <details id="team-cores-section">
+      <summary class="set-section">Team cores</summary>
+      <p class="muted small">Choose 3–5 regular players and name their team. When every selected player
+        is on the same side, your name replaces the recorded name. The other players can change.</p>
+      <div id="core-list"></div>
+      <button id="core-new" type="button" disabled>Add team core</button>
+      <form id="core-form" hidden>
+        <label class="core-field" for="core-name">Team name</label>
+        <input id="core-name" type="text" maxlength="60" required placeholder="e.g. Friday stack" autocomplete="off">
+        <label class="core-field" for="core-search">Find players</label>
+        <input id="core-search" type="text" placeholder="Search username or Steam ID" autocomplete="off">
+        <div id="core-selected" aria-label="Selected core players"></div>
+        <p id="core-count" class="muted small" aria-live="polite"></p>
+        <div id="core-players" aria-label="Players from indexed demos"></div>
+        <p id="core-results-note" class="muted small"></p>
+        <div class="btnrow core-actions">
+          <button id="core-cancel" type="button">Cancel</button>
+          <button id="core-save" type="submit" disabled>Save team core</button>
+        </div>
+      </form>
+      <p id="core-message" class="muted small" role="status" aria-live="polite"></p>
+      <p class="muted small">Applies to existing demos and future scans. If two cores match the same side,
+        its recorded name is kept. Team cores stay saved when you clear the index.</p>
+    </details>
     <div class="set-section">Index</div>
     <div class="muted small demos-hint">Removes all parsed demo data from the index.
       Your .dem files are never touched.</div>
@@ -302,6 +326,7 @@
 <script src="sketch.js"></script>
 <script src="results.js"></script>
 <script src="playback.js"></script>
+<script src="team-cores.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

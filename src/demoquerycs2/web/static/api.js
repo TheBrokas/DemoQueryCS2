@@ -13,23 +13,36 @@ const UTIL = {
 };
 
 const API = {
-  async get(path) {
-    const r = await fetch(path);
-    if (!r.ok) throw new Error(`${path}: ${r.status} ${await r.text()}`);
-    return r.json();
-  },
-  async post(path, body) {
-    const r = await fetch(path, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body || {}),
-    });
-    if (!r.ok) {
-      let msg = `${r.status}`;
-      try { msg = (await r.json()).detail || msg; } catch (e) { /* ignore */ }
-      throw new Error(msg);
+  async request(path, options = {}) {
+    const controller = new AbortController();
+    // A timed-out mutation may already have committed; allow Settings saves
+    // and scans to finish while bounding reads and searches.
+    const timeout = !options.method ? 30000 : path === "/api/search" ? 90000 : 0;
+    const timer = timeout ? setTimeout(() => controller.abort(), timeout) : null;
+    try {
+      let r;
+      try { r = await fetch(path, { ...options, signal: controller.signal }); }
+      catch (e) {
+        throw new Error(e.name === "AbortError" ? "The request took too long."
+          : "Could not connect to DemoQuery.");
+      }
+      if (!r.ok) {
+        let msg = r.status === 429 ? "Too many requests. Wait a moment and try again."
+          : r.status === 422 ? "Check the entered values and try again."
+          : "DemoQuery could not complete the request.";
+        try { const data = await r.json(); if (typeof data.detail === "string") msg = data.detail; }
+        catch (e) { /* proxy error pages are not user-facing messages */ }
+        throw new Error(msg);
+      }
+      return await r.json();
+    } finally {
+      if (timer !== null) clearTimeout(timer);
     }
-    return r.json();
+  },
+  get(path) { return this.request(path); },
+  post(path, body) {
+    return this.request(path, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {}) });
   },
 };
 
@@ -86,11 +99,11 @@ function loadRadar(mapName, level) {
   const key = `${mapName}:${level}`;
   if (!radarCache.has(key)) {
     const img = new Image();
-    img.src = `/api/maps/${mapName}/radar?level=${level}`;
     radarCache.set(key, new Promise((res) => {
       img.onload = () => res(img);
-      img.onerror = () => res(null);
+      img.onerror = () => { radarCache.delete(key); res(null); };
     }));
+    img.src = `/api/maps/${mapName}/radar?level=${level}`;
   }
   return radarCache.get(key);
 }

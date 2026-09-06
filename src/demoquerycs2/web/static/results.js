@@ -89,11 +89,13 @@ const Results = {
       ? `${m.team1}${m.team2 ? " vs " + m.team2 : ""}`
       : m.demo.replace(".dem", "");
     meta.innerHTML = `
-      <div class="demo" title="${m.demo}">${matchup}</div>
+      <div class="demo"></div>
       <div class="row">Round ${m.round_num} &middot; ${when}</div>
       <div class="row">${scoreBadge}${bombBadge}${site}</div>
       <div class="row">CT ${m.ct_buy} vs T ${m.t_buy}${m.is_pistol ? " · pistol" : ""}</div>
       <div class="row">winner: <span class="win ${m.winner === "CT" ? "ct" : m.winner === "T" ? "t" : ""}">${m.winner || "?"}</span></div>`;
+    meta.querySelector(".demo").textContent = matchup;
+    meta.querySelector(".demo").title = m.demo;
     el.appendChild(meta);
     // start playback just before the snapshot moment shown on the card,
     // not the beginning of the whole matched window

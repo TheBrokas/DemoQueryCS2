@@ -8,6 +8,21 @@ Draw hypothetical CT/T positions on a map, set a similarity tolerance (in game u
 >
 > **[Download the app](https://github.com/TheBrokas/DemoQueryCS2/releases)** — free for players, analysts and teams; index your own demo library (Windows).
 
+## Team cores (v1.1.0)
+
+In local mode, open **Settings → Team cores**, name a team and select 3–5
+players from your indexed demos. Players are identified by Steam ID; the picker
+shows the username from their latest indexed recording (using its file date).
+Every selected player must appear on the same side of a round. The remaining
+teammates can vary, and the custom name overrides any recorded team name.
+
+Saving applies to existing indexed rounds without reparsing the original demos;
+future scans update membership automatically. Names feed the team filter,
+result cards, scenario statistics and playback. If multiple cores match the
+same side, Settings reports the overlap and that round keeps its recorded name
+until the conflict is resolved. Definitions survive clearing the demo index.
+These controls and mutation endpoints are unavailable in the hosted demo.
+
 ## How it works
 
 1. **Nav clustering (build time)** — each map's navigation mesh (~2,000–4,000 walkable areas) is clustered into ~100–180 mid-sized *nodes* via deterministic agglomerative graph merging. A geodesic (walk-path) distance matrix between all nodes is precomputed, plus a raster grid for O(1) point→node lookup. See `scripts/build_map_assets.py` (needs `awpy get maps` + `awpy get navs` once, dev only — the shipped app is fully offline).
@@ -17,7 +32,7 @@ Draw hypothetical CT/T positions on a map, set a similarity tolerance (in game u
 
 ## Download
 
-**[Download DemoQueryCS2 v1.0.1](https://github.com/TheBrokas/DemoQueryCS2/releases/download/v1.0.1/DemoQueryCS2-setup.exe)** (Windows) —
+**[Download DemoQueryCS2 v1.1.0](https://github.com/TheBrokas/DemoQueryCS2/releases/download/v1.1.0/DemoQueryCS2-setup.exe)** (Windows) —
 free for personal and team use (see [LICENSE.txt](LICENSE.txt)).
 
 The installer is unsigned — SmartScreen will warn; choose "More info" → "Run anyway".
@@ -25,7 +40,7 @@ Verify the download if you like with `Get-FileHash <file> -Algorithm SHA256`:
 
 | Version | SHA-256 |
 |---|---|
-| 1.0.1 (`DemoQueryCS2-setup.exe`) | `a21453830bc9d00b75ad21375a1b530f601ee556f2b8b352da3a31c52c550217` |
+| 1.1.0 (`DemoQueryCS2-setup.exe`) | `130eabd6eb25c59df586c73eb40c5e443e2caf5509ea3841e1a0a77c86064e01` |
 
 Prefer not to run a downloaded unsigned exe? You can run or build the app from
 source instead — see [Quick start](#quick-start-development) (run directly, no
@@ -46,13 +61,36 @@ Build it:
 
 ```powershell
 .venv\Scripts\python -m PyInstaller packaging\cs2sf-server.spec --noconfirm --distpath dist-server
-cargo tauri build        # needs rustup (MSVC) + VS Build Tools; NSIS fetched automatically
+cargo tauri build --config packaging/unsigned-build.json  # personal build; no updater signing key required
 # -> src-tauri\target\release\bundle\nsis\DemoQueryCS2_<ver>_x64-setup.exe
 ```
 
-Per release: compute the installer's SHA-256 (`Get-FileHash`), update the Download
-table above, and upload the installer as a GitHub Release asset. Code signing
-(Azure Trusted Signing ~$10/mo) can remove the SmartScreen warning later.
+For official releases, build without the unsigned override and supply the existing
+updater signing key through `TAURI_SIGNING_PRIVATE_KEY` (key content, not its
+path). The key and its password must never be committed. Windows Authenticode
+signing and the updater signature are separate: the updater verifies the release,
+while SmartScreen still treats the executable as unsigned.
+
+If an unattended build pauses at the key-password prompt, the finished installer
+can be signed separately with `cargo tauri signer sign --private-key-path <key>`.
+For a password-free key, pass an explicit empty `--password` argument using a
+process launcher that preserves empty arguments (Python `subprocess.run` does).
+Then run `python scripts/release.py manifest <version> --notes "..."` and verify
+the signature against the public key in `src-tauri/tauri.conf.json`.
+
+Upload the versioned installer, an identical `DemoQueryCS2-setup.exe` copy,
+its `.sig`, and `latest.json` to a draft GitHub release. Check asset hashes and
+manifest URLs before publishing it as the latest stable release. Update the
+Download SHA-256 table above and the site's pinned download redirect afterward.
+Installed apps keep their library and settings and offer the signed update.
+
+Release verification for v1.1.0: 86 backend tests and 8 frontend regressions;
+core-builder browser checks against source and the bundled Windows engine;
+native WebView2 startup and Settings inspection. Tests used a separate real-library
+copy: a three-player core matched 787 rounds, including query and playback labels.
+Creation, editing, player limits, overlap handling, failed-save retry, deletion and
+reload persistence passed. First-save backfill took about 19 seconds on that
+library; later source saves took under a second.
 
 ## Quick start (development)
 

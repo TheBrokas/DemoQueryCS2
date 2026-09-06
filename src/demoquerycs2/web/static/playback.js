@@ -44,19 +44,18 @@ const Playback = {
 
   fillHeader() {
     const r = this.data.round;
-    const setTeam = (id, name, wantLogo) => {
+    const setTeam = (id, name, custom) => {
       const el = document.getElementById(id);
       el.innerHTML = "";
-      const canon = canonicalTeam(name);
-      el.appendChild(document.createTextNode(displayTeam(canon)));
+      el.appendChild(document.createTextNode(custom ? name : displayTeam(name)));
     };
-    setTeam("pb-team-ct", r.ct_team || "CT", r.has_teams);
-    setTeam("pb-team-t", r.t_team || "T", r.has_teams);
+    setTeam("pb-team-ct", r.ct_team || "CT", r.ct_custom);
+    setTeam("pb-team-t", r.t_team || "T", r.t_custom);
     const hltv = document.getElementById("pb-hltv");
-    hltv.hidden = !r.has_teams;
-    if (r.has_teams) {
-      const ct = canonicalTeam(r.ct_team);
-      const t = canonicalTeam(r.t_team);
+    hltv.hidden = !r.has_teams || (!r.hltv_id && (r.ct_custom || r.t_custom));
+    if (!hltv.hidden) {
+      const ct = r.ct_custom ? r.ct_team : canonicalTeam(r.ct_team);
+      const t = r.t_custom ? r.t_team : canonicalTeam(r.t_team);
       if (r.hltv_id) {
         hltv.href = `https://www.hltv.org/matches/${r.hltv_id}/` +
           `${ct.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-vs-${t.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
@@ -84,7 +83,15 @@ const Playback = {
     // playback (result card or another map) still closes the old view so its
     // content cannot be mistaken for the requested match.
     if (!opts.keep) document.getElementById("playback-modal").hidden = true;
-    const data = await API.get(`/api/rounds/${roundId}/playback`);
+    let data;
+    try { data = await API.get(`/api/rounds/${roundId}/playback`); }
+    catch (e) {
+      if (seq !== this._seq) return false;
+      document.getElementById("playback-modal").hidden = true;
+      document.getElementById("resolved").textContent =
+        `This round could not load: ${e.message} Select the round again to retry.`;
+      return false;
+    }
     if (seq !== this._seq) return;   // a newer open() or close() supersedes this one
     this.mapInfo = mapInfo;
     this.data = data;

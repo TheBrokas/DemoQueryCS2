@@ -10,6 +10,7 @@ const Sketch = {
   showOverlay: false,
   canvas: null,
   ctx: null,
+  renderSeq: 0,
 
   init() {
     this.canvas = document.getElementById("board");
@@ -19,18 +20,26 @@ const Sketch = {
   },
 
   async setMap(mapInfo) {
+    this.renderSeq++;
     this.map = mapInfo;
     this.level = "upper";
     this.markers = { ct: [], t: [], smoke: [], molly: [] };
     this.nodesData = null;
     document.getElementById("level-overlay").hidden = !mapInfo.has_lower;
     if (this.showOverlay) await this.loadNodes();
-    this.render();
+    await this.render();
   },
 
   async loadNodes() {
     if (!this.nodesData && this.map) {
-      this.nodesData = await API.get(`/api/maps/${this.map.map_name}/nodes`);
+      const map = this.map;
+      try {
+        const nodes = await API.get(`/api/maps/${map.map_name}/nodes`);
+        if (this.map === map) this.nodesData = nodes;
+      } catch (e) {
+        if (this.map === map) document.getElementById("resolved").textContent =
+          "Map areas could not load. Toggle the area overlay to retry.";
+      }
     }
   },
 
@@ -114,11 +123,13 @@ const Sketch = {
   },
 
   async render() {
+    const seq = ++this.renderSeq;
     const ctx = this.ctx;
     ctx.clearRect(0, 0, 1024, 1024);
     if (!this.map) return;
     const level = (this.map.has_lower && this.level === "lower") ? "lower" : "upper";
     const img = await loadRadar(this.map.map_name, level);
+    if (seq !== this.renderSeq) return;
     if (img) ctx.drawImage(img, 0, 0, 1024, 1024);
     else { ctx.fillStyle = "#141a20"; ctx.fillRect(0, 0, 1024, 1024); }
 
